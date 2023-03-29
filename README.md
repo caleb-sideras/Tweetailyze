@@ -1,15 +1,17 @@
 <h1>TweetAIlyzeV1 - Twitter Summarizer API</h1>
 <p>This API provides a way to summarize a Twitter account through embedding and clustering of tweets, then performing sentiment analysis and topic modeling. Everything is commentend courtesy of ChatGPT.</p>
 <h2>How it works</h2>
-<p>The app takes a POST request of a Twitter account's username and gets the most recent X tweets using the tweepy package.</p>
-<p>The text of each tweet is preprocessed using the nltk package.</p>
-<p>The preprocessed text is transformed into embeddings using the transformers package and the pre-trained bert-base-multilingual-cased model.</p>
-<p>The embeddings are clustered using agglomerative clustering with cosine metric and average linkage.</p>
-<p>The tweets are separated into clusters based on their cluster labels.</p>
-<p>Sentiment analysis is performed using the VADER sentiment analyzer.</p>
-<p>Topic modeling is performed using non-negative matrix factorization (NMF) from the scikit-learn package.</p>
-<p>The top words for each topic are classified using the OpenAI completion API.</p>
-<p>The results are returned.</p>
+<ol>
+  <li>The app takes a POST request of a Twitter account's username and gets the most recent X tweets using the tweepy package.</li>
+  <li>The text of each tweet is preprocessed using the nltk package.</li>
+  <li>The preprocessed text is transformed into embeddings using the transformers package and the pre-trained bert-base-multilingual-cased model.</li>
+  <li>The embeddings are clustered using agglomerative clustering with cosine metric and average linkage.</li>
+  <li>The tweets are separated into clusters based on their cluster labels.</li>
+  <li>Sentiment analysis is performed using the VADER sentiment analyzer.</li>
+  <li>Topic modeling is performed using non-negative matrix factorization (NMF) from the scikit-learn package.</li>
+  <li>The top words for each topic are classified using the OpenAI completion API.</li>
+  <li>The results are returned.</p>
+</ol>
 <h2>API Endpoint</h2>
 <p>/tweets</p>
 <h2>HTTP Method</h2>
