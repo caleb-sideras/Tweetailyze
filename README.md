@@ -1,5 +1,5 @@
-<h1>TweetAIlyzeV1 - Twitter Summarizer API</h1>
-<p>This API provides a way to summarize a Twitter account through embedding and clustering of tweets, then performing sentiment analysis and topic modeling. Everything is commentend courtesy of ChatGPT.</p>
+<h1>TweetAIlyzeV1 - Twitter Summarizer</h1>
+<p>This FastAPI backend provides a way to summarize a Twitter account through embedding and clustering of tweets, then performing sentiment analysis and topic modeling. Everything is commentend courtesy of ChatGPT.</p>
 <h2>How it works</h2>
 <ol>
   <li>The app takes a POST request of a Twitter account's username and gets the most recent X tweets using the tweepy package.</li>
