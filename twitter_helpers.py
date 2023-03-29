@@ -18,7 +18,7 @@ def get_twitter_user(tweepyClient: tweepy.API, ID: str = None, username: str = N
 
 def get_tweets_by_user_id(tweepyClient: tweepy.API, user_id: str, max_results: int = 20, expansions: str = 'attachments.media_keys', media_fields: str = 'url') -> list:
     try:
-        tweets = tweepyClient.get_users_tweets(id=user_id, max_results=max_results, expansions=expansions, media_fields=media_fields)
+        tweets = tweepyClient.get_users_tweets(id=user_id, max_results=max_results, expansions=expansions, media_fields=media_fields, exclude=["retweets","replies"])
         return tweets
     except tweepy.errors.TweepError as e:
         print(f"Error: {e}")

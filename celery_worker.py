@@ -18,8 +18,9 @@ def tweet_analysis(tweetsRaw):
     # Get the tweet id for each tweet
     tweet_id = [t['id'] for t in tweetsRaw]
 
+    openai.api_key = os.environ.get('OPENAI_API_KEY')
     # Generate embeddings for each tweet using generate_embeddings function
-    embeddings = generate_embeddings(tweets)
+    embeddings = generate_embeddings(tweets, openai)
 
     # Cluster tweets into 5 clusters using cluster_tweets function -> ideally some process should decide this
     cluster_labels = cluster_tweets(embeddings, 5)
@@ -27,7 +28,6 @@ def tweet_analysis(tweetsRaw):
     # Separate tweets into clusters based on their cluster labels using separate_clusters function
     clusters, clusters_id = separate_clusters(tweets, tweet_id, cluster_labels)
 
-    openai.api_key = os.environ.get('OPENAI_API_KEY')
     # Create an output dictionary with key words, tweets, sentiment and topic weight for each cluster using create_output function
     out = create_output(clusters, clusters_id, 1, openai)
 

@@ -1,8 +1,6 @@
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from transformers import AutoTokenizer, AutoModel
-import torch
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -31,24 +29,16 @@ def preprocess_text(text):
     return preprocessed_text
 
 # Define a function to generate embeddings for a list of sentences using BERT model
-def generate_embeddings(sentences):
-    # Load the tokenizer and model from pretrained BERT model
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-multilingual-cased')
-    model = AutoModel.from_pretrained('bert-base-multilingual-cased')
+def generate_embeddings(sentences, openai_api):
 
-    # Tokenize the sentences with padding and truncation
-    tokenized = tokenizer(sentences, padding=True,
-                          truncation=True, return_tensors='pt')
-
-    # Get the embeddings from the last hidden layer of the model without gradient calculation
-    with torch.no_grad():
-        outputs = model(**tokenized)
-
-    embeddings = outputs.last_hidden_state
-
-    # Convert the embeddings to numpy array and reshape it to 2D matrix
-    np_embeddings = embeddings.numpy()
-    flat_embeddings = np_embeddings.reshape(np_embeddings.shape[0], -1)
+    def get_openai_embedding(text, model="text-embedding-ada-002"):
+        print("api-call")
+        return openai_api.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
+    
+    # Get embeddings for a list of sentences
+    embeddings = [get_openai_embedding(sentence) for sentence in sentences]
+    flat_embeddings = np.stack(embeddings)
+    # print(f"This {embeddings.shape} to {flat_embeddings.shape}")
 
     return flat_embeddings
 
