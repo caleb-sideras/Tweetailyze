@@ -1,0 +1,51 @@
+# System files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Editor files
+*.bak
+*.cache
+*.log
+*.orig
+*.rej
+*.tmp
+
+# Environment files
+.env
+.env.*
+
+# Docker files
+.dockerignore
+logs/
+*.tar
+
+# DB files
+migrations/
+pgadmin4.db
+
+# Dependency directories
+venv/
+env/
+lib/
+bin/
+include/
+share/
+python*/site-packages/
+
+# Celery files
+celerybeat-schedule
+
+# Testing files
+pytest.ini
+__init__.py
+
+# Other files
+celery.pid
+flower.pid
