@@ -11,7 +11,7 @@ celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL")
 celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND")
 
 @celery.task(name="tweet_analysis")
-def tweet_analysis(tweetsRaw):
+def tweet_analysis(tweetsRaw, user_id):
     # Preprocess the text of each tweet using preprocess_text function
     tweets = [preprocess_text(t['text']) for t in tweetsRaw]
 
@@ -29,7 +29,7 @@ def tweet_analysis(tweetsRaw):
     clusters, clusters_id = separate_clusters(tweets, tweet_id, cluster_labels)
 
     # Create an output dictionary with key words, tweets, sentiment and topic weight for each cluster using create_output function
-    out = create_output(clusters, clusters_id, 1, openai)
+    out = create_output(clusters, clusters_id, 1, openai, user_id)
 
     return out
 

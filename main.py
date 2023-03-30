@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import JSONResponse
-from fastapi_sqlalchemy import DBSessionMiddleware, db
 from dotenv import load_dotenv
+from session import get_sessionmaker_instance
+import uvicorn
 
-from schema import TwitterAccount as SchemaTwitterAccount
-from models import TwitterAccount
+from models import TwitterAccount, TweetCluster
 import os
 
 from celery_worker import tweet_analysis
@@ -16,8 +16,13 @@ app = FastAPI()
 
 load_dotenv(".env")
 
-app.add_middleware(DBSessionMiddleware, db_url=os.environ["DATABASE_URL"])
 BEARER_TOKEN = os.environ["BEARER_TOKEN"]
+
+SessionMaker = get_sessionmaker_instance()
+session = SessionMaker()
+
+def format_return(user, tweet_clusters):
+    return {"user": user["data"], "clusters": tweet_clusters}
 
 @app.post("/tweets")
 def check_username(data=Body(...)):
@@ -41,12 +46,27 @@ def check_username(data=Body(...)):
     # Get the user ID from the user object
     user_id = user['data']['id']
 
-    # Check if the user's tweets are already stored in the database
-    twitter_account = db.session.query(TwitterAccount).filter_by(id=user_id).first()
+    # TODO come up with some logic that only updates if most recent tweet > date modified
+    # pulling a single most recent tweet?
+    twitter_account = session.query(TwitterAccount).filter_by(id=user_id).first()
 
-    # If the tweets are already stored, return them as a response
     if twitter_account:
-        return JSONResponse({"Tweets":twitter_account.data})
+        clusters = session.query(TweetCluster).filter(TweetCluster.account_id == user_id).all()
+        tweet_clusters = []
+        for cluster in clusters:
+            cluster_dict = {
+                "topic": cluster.topic,
+                "key_words": cluster.key_words,
+                "tweets": []
+            }
+            cluster_dict["tweets"].extend(map(lambda tweet: {"tweet_id": str(tweet.id), **tweet.data}, cluster.tweets))
+            tweet_clusters.append(cluster_dict)
+    
+        return format_return(user, tweet_clusters)
+
+    twitter_account = TwitterAccount(id=user_id, username=username)
+    session.add(twitter_account)
+    session.commit()
 
     # Retrieve the user's tweets using the Tweepy API client
     tweets = get_tweets_by_user_id(tweepyClient, user_id=user_id, max_results=20, expansions='attachments.media_keys', media_fields='url')
@@ -56,15 +76,14 @@ def check_username(data=Body(...)):
         return JSONResponse({"Error":"Invalid User_Id"})
 
     # Analyze the user's tweets using a Celery task
-    task = tweet_analysis.delay(tweets['data'])
+    task = tweet_analysis.delay(tweets['data'], user_id)
 
     # Get the results of the Celery task
     new_data = task.get()
 
-    # Store the user's tweets and analysis results in the database
-    new_account = TwitterAccount(id=user_id, username=username, data=new_data)
-    db.session.add(new_account)
-    db.session.commit()
-
     # Return the user's tweets and analysis results as a response
-    return JSONResponse({"Tweets":new_data})
+    return JSONResponse({"Summarization":format_return(user, new_data)})
+
+# to run app locally, (keep docker running db)
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=8000)

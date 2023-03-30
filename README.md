@@ -1,16 +1,16 @@
-<h1>TweetAIlyzeV1 - Twitter Summarizer</h1>
-<p>This FastAPI backend provides a way to summarize a Twitter account through embedding and clustering of tweets, then performing sentiment analysis and topic modeling. Everything is commentend courtesy of ChatGPT.</p>
+<h1>TweetAIlyzeV2 - Twitter Summarizer</h1>
+<p>FastAPI backend that summarizes a Twitter account's tweets through embedding/clustering of tweets, w/ sentiment analysis and topic modeling. Everything is commentend courtesy of ChatGPT.</p>
 <h2>How it works</h2>
 <ol>
   <li>The app takes a POST request of a Twitter account's username and gets the most recent X tweets using the tweepy package.</li>
   <li>The text of each tweet is preprocessed using the nltk package.</li>
-  <li>The preprocessed text is transformed into embeddings using the transformers package and the pre-trained bert-base-multilingual-cased model.</li>
+  <li>The preprocessed text is transformed into embeddings using OpenAI model 'text-embedding-ada-002'</li>
   <li>The embeddings are clustered using agglomerative clustering with cosine metric and average linkage.</li>
   <li>The tweets are separated into clusters based on their cluster labels.</li>
   <li>Sentiment analysis is performed using the VADER sentiment analyzer.</li>
   <li>Topic modeling is performed using non-negative matrix factorization (NMF) from the scikit-learn package.</li>
-  <li>The top words for each topic are classified using the OpenAI completion API.</li>
-  <li>The results are returned.</p>
+  <li>The top words for each topic are classified using the OpenAI model 'text-curie-001'.</li>
+  <li>Results are stored to Postgres and returned.</li>
 </ol>
 <h2>API Endpoint</h2>
 <p>/tweets</p>
@@ -25,7 +25,6 @@
   <li>key_words: an array of strings representing the keywords associated with the topic</li>
   <li>tweets: an array of JSON objects representing the most relevant tweets associated with the topic. Each JSON object in the tweets array contains the following keys:
     <ul>
-      <li>tweet: the text of the tweet</li>
       <li>tweet_id: the ID of the tweet</li>
       <li>sentiment: a JSON object representing the sentiment analysis of the tweet. The sentiment analysis contains the following keys:
         <ul>
@@ -42,52 +41,239 @@
 <p>Here's an example of what the response JSON object might look like:</p>
 <pre>
 {
-  "Tweets": {
-    "Dogecoin": {
+  "user": {
+    "id": "44196397",
+    "name": "Elon Musk",
+    "username": "elonmusk"
+  },
+  "clusters": [
+    {
+      "topic": "Web",
       "key_words": [
-        "dogeofficialceo",
-        "days",
-        "elvis",
-        "theprashanthcb",
-        "apart",
-        "civilization",
-        "mars",
-        "hear",
-        "getting",
-        "falls"
+        "https",
+        "verified",
+        "sign",
+        "web",
+        "get",
+        "via",
+        "blue",
+        "day",
+        "prescient",
+        "old"
       ],
       "tweets": [
         {
-          "tweet": "peterdiamandis eat donut every morning still alive",
-          "tweet_id": "1640783261713702914",
-          "sentiment": {
-            "neg": 0,
-            "neu": 0.698,
-            "pos": 0.302,
-            "compound": 0.3818
-          },
-          "topic_weight": 0.00820937220701521
-        },
-        {
-          "tweet": "theprashanthcb dogeofficialceo hear getting mars civilization falls apart",
-          "tweet_id": "1640628523739258881",
           "sentiment": {
             "neg": 0,
             "neu": 1,
             "pos": 0,
             "compound": 0
           },
-          "topic_weight": 0.6833158363483436
-        }]
+          "topic_weight": 0.01208955708907979
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.5877986129941202
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.288476329726015
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 0.82,
+            "pos": 0.18,
+            "compound": 0.296
+          },
+          "topic_weight": 0.0822121373001949
+        },
+        {
+          "sentiment": {
+            "neg": 0.281,
+            "neu": 0.651,
+            "pos": 0.068,
+            "compound": -0.7351
+          },
+          "topic_weight": 0.05755325187354697
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 0.508,
+            "pos": 0.492,
+            "compound": 0.4404
+          },
+          "topic_weight": 0.288476329465526
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.51244631582272
+        },
+        {
+          "sentiment": {
+            "neg": 0.034,
+            "neu": 0.826,
+            "pos": 0.141,
+            "compound": 0.5423
+          },
+          "topic_weight": 0.09447132011376012
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.347118694971934
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 0.513,
+            "pos": 0.487,
+            "compound": 0.5859
+          },
+          "topic_weight": 0.19641641358159842
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.19641641948078017
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.3471186966182624
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 0.196,
+            "pos": 0.804,
+            "compound": 0.4767
+          },
+          "topic_weight": 0.26578122981760216
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.51244631582272
+        },
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 0.24832703746875484
+        }
+      ]
+    },
+    {
+      "topic": "paperclip",
+      "key_words": [
+        "real",
+        "problem",
+        "paperclip",
+        "clippy"
+      ],
+      "tweets": [
+        {
+          "sentiment": {
+            "neg": 0.474,
+            "neu": 0.526,
+            "pos": 0,
+            "compound": -0.4019
+          },
+          "topic_weight": 1
+        }
+      ]
+    },
+    {
+      "topic": "Working",
+      "key_words": [
+        "working",
+        "service",
+        "need",
+        "money",
+        "good",
+        "customer",
+        "course"
+      ],
+      "tweets": [
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 0.674,
+            "pos": 0.326,
+            "compound": 0.4404
+          },
+          "topic_weight": 1.0000000000000007
+        }
+      ]
+    },
+    {
+      "topic": " Celebrities",
+      "key_words": [
+        "treating",
+        "standard",
+        "imo",
+        "https",
+        "everyone",
+        "equally",
+        "different",
+        "celebrities"
+      ],
+      "tweets": [
+        {
+          "sentiment": {
+            "neg": 0,
+            "neu": 1,
+            "pos": 0,
+            "compound": 0
+          },
+          "topic_weight": 1
+        }
+      ]
     }
-   }
+  ]
 }
 </pre>
 
 <h2>Docker, FastAPI, FastAPI_SQLalchemy, PG ADMIN, Celery, Flower, Redis</h2>
 
 <h2>Msc</h2>
-<p>The only external api call is to OpenAI 'text-curie-001,' to classify the topic of a cluster based on key words. Embedding, Clustering, Topic modelling and sentiment analysis all run locally; reducing API fees at the cost of larger docker images and local server compute. TweetAIlyzeV2 will use OpenAI for embedding, removing the need for Tensorflow and Torch - significantly reducing the docker image sizes.</p>
+<p>Api calls to OpenAI 'text-curie-001' to classify the topic of a cluster based on key words & 'text-embedding-ada-002' for embedding. Clustering, Topic modelling and sentiment analysis still all run locally- very lightweight and low compute. New docker images ~10gb smaller.</p>
 
 <h2>Environment Variables (Examples)</h2>
 

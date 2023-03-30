@@ -6,6 +6,15 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from db_helper import db_tweet, db_cluster
+
+from celery import Celery
+import os
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+
+celery = Celery('tweet_analysis', broker=os.environ.get("CELERY_BROKER_URL"), backend=os.environ.get("CELERY_RESULT_BACKEND")) 
 
 nltk.download('stopwords')
 stop_words = stopwords.words('english')
@@ -13,6 +22,7 @@ nltk.download('punkt')
 nltk.download('vader_lexicon')
 
 # Define a function to preprocess the text of each tweet
+@celery.task
 def preprocess_text(text):
     # Tokenize the text into words
     words = word_tokenize(text)
@@ -29,6 +39,7 @@ def preprocess_text(text):
     return preprocessed_text
 
 # Define a function to generate embeddings for a list of sentences using BERT model
+@celery.task
 def generate_embeddings(sentences, openai_api):
 
     def get_openai_embedding(text, model="text-embedding-ada-002"):
@@ -43,6 +54,7 @@ def generate_embeddings(sentences, openai_api):
     return flat_embeddings
 
 # Define a function to cluster tweets using agglomerative clustering with cosine metric and average linkage
+@celery.task
 def cluster_tweets(embeddings, n_clusters):
     # Create an agglomerative clustering object with n_clusters and cosine metric and average linkage parameters
     clustering = AgglomerativeClustering(
@@ -54,6 +66,7 @@ def cluster_tweets(embeddings, n_clusters):
     return cluster_labels
 
 # Define a function to separate tweets into clusters based on their cluster labels
+@celery.task
 def separate_clusters(tweets, tweet_id, cluster_labels):
     # Initialize an empty list to store the clusters and their ids
     clusters = []
@@ -79,6 +92,7 @@ def separate_clusters(tweets, tweet_id, cluster_labels):
     return clusters, clusters_id
 
 # Define a function to create a VADER sentiment analyzer object and analyze sentiment for each tweet in a cluster
+@celery.task
 def analyze_sentiment(cluster):
 
     # Create a VADER sentiment analyzer object
@@ -98,6 +112,7 @@ def analyze_sentiment(cluster):
     return sentiments
 
 # Define a function to perform NMF topic modeling on a cluster of tweets and get the top words for each topic
+@celery.task
 def get_topics(cluster, num_topics):
 
     # Create TF-IDF vectorizer with stop words removal
@@ -125,6 +140,7 @@ def get_topics(cluster, num_topics):
     return top_words
 
 # Define a function to classify the topic of a cluster using OpenAI completion API
+@celery.task
 def classify_topic(top_words, openai_api):
 
     # Join the top words into a comma-separated string
@@ -150,6 +166,7 @@ def classify_topic(top_words, openai_api):
     return label
 
 # Define a function to get the topic weights for each tweet in a cluster using NMF
+@celery.task
 def get_topic_weights(cluster, num_topics):
 
     # Create TF-IDF vectorizer with stop words removal
@@ -169,10 +186,11 @@ def get_topic_weights(cluster, num_topics):
     return tweet_topics
 
 # Define a function to create an output dictionary with key words, tweets, sentiment and topic weight for each cluster
-def create_output(clusters, clusters_id, num_topics, openai_api):
+@celery.task
+def create_output(clusters, clusters_id, num_topics, openai_api, user_id):
 
     # Initialize an empty dictionary to store the output
-    out = {}
+    ret = []
 
     # Loop through each cluster and its index in the clusters list
     for i, cluster in enumerate(clusters):
@@ -181,22 +199,24 @@ def create_output(clusters, clusters_id, num_topics, openai_api):
         top_words = get_topics(cluster, num_topics)
 
         # Classify the topic of each cluster using classify_topic function
-        key = classify_topic(top_words, openai_api)
+        topic = classify_topic(top_words, openai_api)
 
         # Initialize an empty dictionary for each key in the output dictionary
-        out[key] = {}
+        out = {}
+        out['topic'] = topic
 
         # Store the key words for each key in the output dictionary
-        out[key]["key_words"] = top_words
+        out["key_words"] = top_words
 
         # Get the topic weights for each tweet in the cluster using get_topic_weights function
         tweet_topics = get_topic_weights(cluster, num_topics)
 
         # Initialize an empty list to store the tweets for each key in the output dictionary
-        out[key]["tweets"] = []
+        out["tweets"] = []
 
         # Analyze sentiment for each tweet in the cluster using analyze_sentiment function
         sentiments = analyze_sentiment(cluster)
+        cluster_db_id = db_cluster({"topic" : topic, "key_words" : top_words, "account_id": user_id})
 
         # Loop through each tweet and its index in the cluster
         for j, tweet in enumerate(cluster):
@@ -207,12 +227,14 @@ def create_output(clusters, clusters_id, num_topics, openai_api):
             # Get the topic weight for the tweet
             topic_weight = tweet_topics[j].tolist()[0]
 
-        # Append a dictionary with tweet, tweet_id, sentiment and topic_weight to the tweets list in the output dictionary
-            out[key]["tweets"].append({
-                "tweet": tweet,
+            print("tweet_db")
+            tweet_db = db_tweet({"id" : clusters_id[i][j], "data" : {"sentiment": sentiment, "topic_weight": topic_weight}, "cluster_id" : cluster_db_id})
+            # Append a dictionary with tweet, tweet_id, sentiment and topic_weight to the tweets list in the output dictionary
+            out["tweets"].append({
                 "tweet_id": clusters_id[i][j],
                 "sentiment": sentiment,
                 "topic_weight": topic_weight
             })
+        ret.append(out)
 
-    return out
+    return ret
