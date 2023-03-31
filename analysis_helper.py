@@ -43,13 +43,15 @@ def preprocess_text(text):
 def generate_embeddings(sentences, openai_api):
 
     def get_openai_embedding(text, model="text-embedding-ada-002"):
-        print("api-call")
-        return openai_api.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
+        print("embedding-call")
+        try:
+            return openai_api.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
+        except Exception as e:
+            raise Exception("An error occurred: {}".format(str(e)))
     
     # Get embeddings for a list of sentences
     embeddings = [get_openai_embedding(sentence) for sentence in sentences]
     flat_embeddings = np.stack(embeddings)
-    # print(f"This {embeddings.shape} to {flat_embeddings.shape}")
 
     return flat_embeddings
 
@@ -150,15 +152,19 @@ def classify_topic(top_words, openai_api):
     prompt = f"Classify the topic: {post_top_words}\nLabel:"
 
     # Call the OpenAI completion API with text-curie-001 model and zero temperature and other parameters
-    response = openai_api.Completion.create(
-        model="text-curie-001",
-        prompt=prompt,
-        temperature=0,
-        max_tokens=30,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
+    try:
+        print("classification-call")
+        response = openai_api.Completion.create(
+            model="text-curie-001",
+            prompt=prompt,
+            temperature=0,
+            max_tokens=30,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+    except Exception as e:
+        raise Exception("An error occurred: {}".format(str(e)))
 
     # Get the label from the response
     label = (response["choices"][0]["text"]).replace("\n", "")
@@ -227,14 +233,13 @@ def create_output(clusters, clusters_id, num_topics, openai_api, user_id):
             # Get the topic weight for the tweet
             topic_weight = tweet_topics[j].tolist()[0]
 
-            print("tweet_db")
-            tweet_db = db_tweet({"id" : clusters_id[i][j], "data" : {"sentiment": sentiment, "topic_weight": topic_weight}, "cluster_id" : cluster_db_id})
+            tweet_db = db_tweet({"id" : clusters_id[i][j], "data" : {**sentiment, "topic_weight": topic_weight}, "cluster_id" : cluster_db_id})
             # Append a dictionary with tweet, tweet_id, sentiment and topic_weight to the tweets list in the output dictionary
+
             out["tweets"].append({
-                "tweet_id": clusters_id[i][j],
-                "sentiment": sentiment,
-                "topic_weight": topic_weight
-            })
+                "tweet_id": clusters_id[i][j], 
+                **sentiment, 
+                "topic_weight": round(topic_weight, 3)})
         ret.append(out)
 
     return ret
