@@ -233,7 +233,7 @@ def create_output(clusters, clusters_id, num_topics, openai_api, user_id):
             # Get the topic weight for the tweet
             topic_weight = tweet_topics[j].tolist()[0]
 
-            tweet_db = db_tweet({"id" : clusters_id[i][j], "data" : {**sentiment, "topic_weight": topic_weight}, "cluster_id" : cluster_db_id})
+            tweet_db = db_tweet({"id" : clusters_id[i][j], "data" : {**sentiment, "topic_weight": round(topic_weight,3)}, "cluster_id" : cluster_db_id})
             # Append a dictionary with tweet, tweet_id, sentiment and topic_weight to the tweets list in the output dictionary
 
             out["tweets"].append({

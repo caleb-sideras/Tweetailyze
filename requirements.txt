@@ -15,7 +15,7 @@ pip-chill==1.0.1
 psycopg2-binary==2.9.5
 python-dotenv==1.0.0
 python-version==0.0.2
-redis==4.5.3
+redis==4.5.4
 scikit-learn==1.2.2
 textblob==0.17.1
 tweepy==4.13.0

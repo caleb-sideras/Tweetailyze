@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, HTTPException
+from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -11,7 +11,6 @@ import os
 from celery_worker import tweet_analysis
 
 import tweepy
-from tweepy import TweepError
 from twitter_helpers import get_twitter_user, get_tweets_by_user_id
 
 app = FastAPI()
@@ -36,6 +35,10 @@ session = SessionMaker()
 def format_return(user, tweet_clusters):
     return {"user": user["data"], "clusters": tweet_clusters}
 
+def delete_account(twitter_account):
+    session.delete(twitter_account)
+    session.commit()
+
 @app.post("/tweets")
 def check_username(data=Body(...)):
 
@@ -51,7 +54,7 @@ def check_username(data=Body(...)):
     # Get the Twitter user object using the Tweepy API client
     try:
         user = get_twitter_user(tweepyClient=tweepyClient, username=username)
-    except TweepError as e:
+    except Exception as e:
         return JSONResponse({"Error":str(e)}, status_code=400)
 
     # If the user is invalid, return an error response
@@ -86,7 +89,8 @@ def check_username(data=Body(...)):
     # Retrieve the user's tweets using the Tweepy API client
     try:
         tweets = get_tweets_by_user_id(tweepyClient, user_id=user_id, max_results=20, expansions='attachments.media_keys', media_fields='url')
-    except TweepError as e:
+    except Exception as e:
+        delete_account(twitter_account)
         return JSONResponse({"Error":str(e)}, status_code=400)
     
     # If the tweets are invalid, return an error response
@@ -100,11 +104,12 @@ def check_username(data=Body(...)):
     try:
         new_data = task.get()
     except Exception as e:
+        delete_account(twitter_account)
         out = "Task failed with error: {}".format(task.traceback) if task.state == "FAILURE" else "Unknown error occurred: {}".format(str(e))
         return JSONResponse({out}, status_code=400)
 
     # Return the user's tweets and analysis results as a response
-    return JSONResponse({format_return(user, new_data)})
+    return JSONResponse(format_return(user, new_data))
 
 # to run app locally, (keep docker running db)
 # if __name__ == "__main__":
