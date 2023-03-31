@@ -97,7 +97,11 @@ def check_username(data=Body(...)):
     task = tweet_analysis.delay(tweets['data'], user_id)
 
     # Get the results of the Celery task
-    new_data = task.get()
+    try:
+        new_data = task.get()
+    except Exception as e:
+        out = "Task failed with error: {}".format(task.traceback) if task.state == "FAILURE" else "Unknown error occurred: {}".format(str(e))
+        return JSONResponse({out}, status_code=400)
 
     # Return the user's tweets and analysis results as a response
     return JSONResponse({format_return(user, new_data)})
