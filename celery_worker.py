@@ -12,12 +12,18 @@ celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND")
 
 @celery.task(name="tweet_analysis")
 def tweet_analysis(tweetsRaw, user_id):
-    # Preprocess the text of each tweet using preprocess_text function
-    tweets = [preprocess_text(t['text']) for t in tweetsRaw]
 
-    # Get the tweet id for each tweet
-    tweet_id = [t['id'] for t in tweetsRaw]
+    # Preprocess the text of each tweet using preprocess_text function and get the tweet id for each tweet
+    preprocessed_tweets = [(t['id'], preprocessed_text) for t in tweetsRaw if (t['text'] and t['text'].strip() and (preprocessed_text := preprocess_text(t['text'])))]
+    tweets = [t[1] for t in preprocessed_tweets]
+    tweet_id = [t[0] for t in preprocessed_tweets]
 
+    print(len(tweets), len(tweet_id))
+    print(tweets)
+
+    if not tweets:
+        return []
+    
     openai.api_key = os.environ.get('OPENAI_API_KEY')
     # Generate embeddings for each tweet using generate_embeddings function
     embeddings = generate_embeddings(tweets, openai)

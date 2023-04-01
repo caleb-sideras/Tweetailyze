@@ -7,6 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from db_helper import db_tweet, db_cluster
+import re
 
 from celery import Celery
 import os
@@ -24,8 +25,13 @@ nltk.download('vader_lexicon')
 # Define a function to preprocess the text of each tweet
 @celery.task
 def preprocess_text(text):
+
+    # Removing urls
+    url_pattern = re.compile(r'https?://\S+')
+    text_without_urls = url_pattern.sub('', text)
+
     # Tokenize the text into words
-    words = word_tokenize(text)
+    words = word_tokenize(text_without_urls)
 
     # Remove stop words
     words = [word for word in words if word.lower() not in stop_words]
@@ -43,7 +49,7 @@ def preprocess_text(text):
 def generate_embeddings(sentences, openai_api):
 
     def get_openai_embedding(text, model="text-embedding-ada-002"):
-        print("embedding-call")
+        print(f"embedding-call")
         try:
             return openai_api.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
         except Exception as e:
@@ -146,11 +152,10 @@ def get_topics(cluster, num_topics):
 def classify_topic(top_words, openai_api):
 
     # Join the top words into a comma-separated string
-    post_top_words = ", ".join("'" + item + "'" for item in top_words)
+    post_top_words = ",".join("'" + item + "'" for item in top_words)
 
     # Create a prompt for OpenAI completion API to classify the topic
-    prompt = f"Classify the topic: {post_top_words}\nLabel:"
-
+    prompt = f"The following is a list of words, classify the topic\n\n{post_top_words}\n\nTopic:"
     # Call the OpenAI completion API with text-curie-001 model and zero temperature and other parameters
     try:
         print("classification-call")

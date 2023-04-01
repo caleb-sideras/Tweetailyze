@@ -88,14 +88,14 @@ def check_username(data=Body(...)):
 
     # Retrieve the user's tweets using the Tweepy API client
     try:
-        tweets = get_tweets_by_user_id(tweepyClient, user_id=user_id, max_results=20, expansions='attachments.media_keys', media_fields='url')
+        tweets = get_tweets_by_user_id(tweepyClient, user_id=user_id, max_results=20)
     except Exception as e:
         delete_account(twitter_account)
         return JSONResponse({"Error":str(e)}, status_code=400)
     
     # If the tweets are invalid, return an error response
     if not tweets:
-        return JSONResponse({"Error":"Invalid User_Id"}, status_code=400)
+        return JSONResponse({"Error":"Unknown Error"}, status_code=400)
 
     # Analyze the user's tweets using a Celery task
     task = tweet_analysis.delay(tweets['data'], user_id)
@@ -107,6 +107,9 @@ def check_username(data=Body(...)):
         delete_account(twitter_account)
         out = "Task failed with error: {}".format(task.traceback) if task.state == "FAILURE" else "Unknown error occurred: {}".format(str(e))
         return JSONResponse({out}, status_code=400)
+    
+    if not new_data:
+        return JSONResponse({"Error":"Unknown Error"}, status_code=400)
 
     # Return the user's tweets and analysis results as a response
     return JSONResponse(format_return(user, new_data))
