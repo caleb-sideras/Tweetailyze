@@ -16,7 +16,7 @@ from twitter_helpers import get_twitter_user, get_tweets_by_user_id
 app = FastAPI()
 
 # Add the CORS middleware with allowed origins
-origins = ["http://localhost:5173"]
+origins = ["http://localhost:5173", "https://tweetailyze-frontend.vercel.app/", "https://tweetailyze-frontend.vercel.app"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -39,6 +39,10 @@ def delete_account(twitter_account):
     session.delete(twitter_account)
     session.commit()
 
+@app.get("/")
+def default_endpoint():
+    return({"hello":"this is i"})
+
 @app.post("/tweets")
 def check_username(data=Body(...)):
 
@@ -58,9 +62,10 @@ def check_username(data=Body(...)):
         return JSONResponse({"Error":str(e)}, status_code=400)
 
     # If the user is invalid, return an error response
-    if not user:
+    if not user or 'errors' in user or (not 'data' in user):
+        print(user)
         return JSONResponse({"Error":"Invalid Username"}, status_code=400)
-
+    
     # Get the user ID from the user object
     user_id = user['data']['id']
 
@@ -94,9 +99,11 @@ def check_username(data=Body(...)):
         return JSONResponse({"Error":str(e)}, status_code=400)
     
     # If the tweets are invalid, return an error response
-    if not tweets:
+    if not tweets or 'errors'in tweets or (not 'data' in tweets):
+        print(tweets)
         return JSONResponse({"Error":"Unknown Error"}, status_code=400)
 
+    
     # Analyze the user's tweets using a Celery task
     task = tweet_analysis.delay(tweets['data'], user_id)
 
