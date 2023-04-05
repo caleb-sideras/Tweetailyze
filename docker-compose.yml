@@ -18,16 +18,23 @@ services:
     container_name: app
     build: .
     image: calebsideras/tweetailyze-app:latest
-    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 443 80 --reload"
+    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - .:/app
     ports:
-      - 80:80
-      - 443:443
       - 8000:8000
     depends_on:
       - db
     restart: always
+
+  nginx:
+    build: ./nginx
+    image: calebsideras/nginx:latest
+    ports:
+      - 443:443
+      - 80:80
+    depends_on:
+      - app
 
   redis:
     container_name: redis
