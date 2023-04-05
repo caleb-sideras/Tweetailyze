@@ -16,14 +16,14 @@ from twitter_helpers import get_twitter_user, get_tweets_by_user_id
 app = FastAPI()
 
 # Add the CORS middleware with allowed origins
-# origins = ["http://localhost:5173", "https://tweetailyze-frontend.vercel.app/", "https://tweetailyze-frontend.vercel.app"]
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+origins = ["https://tweetailyze-frontend.vercel.app/", "https://tweetailyze-frontend.vercel.app", "https://tweetailyze-frontend-caleb-sideras.vercel.app/", "https://tweetailyze-frontend-caleb-sideras.vercel.app"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 load_dotenv(".env")
 
