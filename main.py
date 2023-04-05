@@ -16,14 +16,14 @@ from twitter_helpers import get_twitter_user, get_tweets_by_user_id
 app = FastAPI()
 
 # Add the CORS middleware with allowed origins
-origins = ["http://localhost:5173", "https://tweetailyze-frontend.vercel.app/", "https://tweetailyze-frontend.vercel.app"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# origins = ["http://localhost:5173", "https://tweetailyze-frontend.vercel.app/", "https://tweetailyze-frontend.vercel.app"]
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 load_dotenv(".env")
 
@@ -71,10 +71,16 @@ def check_username(data=Body(...)):
 
     # TODO come up with some logic that only updates if most recent tweet > date modified
     # pulling a single most recent tweet?
-    twitter_account = session.query(TwitterAccount).filter_by(id=user_id).first()
+    try:
+        twitter_account = session.query(TwitterAccount).filter_by(id=user_id).first()
+    except Exception as e:
+        return JSONResponse({"Error":str(e)}, status_code=400)
 
     if twitter_account:
-        clusters = session.query(TweetCluster).filter(TweetCluster.account_id == user_id).all()
+        try:
+            clusters = session.query(TweetCluster).filter(TweetCluster.account_id == user_id).all()
+        except Exception as e:
+            return JSONResponse({"Error":str(e)}, status_code=400)
         tweet_clusters = []
         for cluster in clusters:
             cluster_dict = {
@@ -87,9 +93,12 @@ def check_username(data=Body(...)):
     
         return format_return(user, tweet_clusters)
 
-    twitter_account = TwitterAccount(id=user_id, username=username)
-    session.add(twitter_account)
-    session.commit()
+    try:
+        twitter_account = TwitterAccount(id=user_id, username=username)
+        session.add(twitter_account)
+        session.commit()
+    except Exception as e:
+        return JSONResponse({"Error":str(e)}, status_code=400)
 
     # Retrieve the user's tweets using the Tweepy API client
     try:
