@@ -6,6 +6,5 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 COPY download_nltk_resources.py download_nltk_resources.py
 COPY . /app
-EXPOSE 8000
 EXPOSE 80
 EXPOSE 443
