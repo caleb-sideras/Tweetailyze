@@ -47,7 +47,7 @@ services:
 
   caddy:
     build: ./caddy
-    image: caddy:2.6.4
+    image: calebsideras/caddy:2.6.4
     ports:
       - 443:443
       - 80:80
