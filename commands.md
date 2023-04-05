@@ -38,3 +38,24 @@ depends_on:
     - app
     - redis
     - celery_worker
+
+# Caddy
+caddy:
+    build: ./caddy
+    image: calebsideras/caddy:2.6.4
+    ports:
+      - 443:443
+      - 80:80
+    privileged: true
+    depends_on:
+      - app
+
+
+
+FROM caddy:2.6.4
+COPY Caddyfile /etc/caddy/Caddyfile
+
+
+ec2-3-138-120-20.us-east-2.compute.amazonaws.com {
+  reverse_proxy localhost:8000
+}

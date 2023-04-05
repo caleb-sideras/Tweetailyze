@@ -1,3 +1,0 @@
-ec2-3-138-120-20.us-east-2.compute.amazonaws.com {
-  reverse_proxy localhost:8000
-}

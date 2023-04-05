@@ -22,6 +22,8 @@ services:
     volumes:
       - .:/app
     ports:
+      - 80:80
+      - 443:443
       - 8000:8000
     depends_on:
       - db
@@ -44,13 +46,3 @@ services:
     depends_on:
       - app
       - redis
-
-  caddy:
-    build: ./caddy
-    image: calebsideras/caddy:2.6.4
-    ports:
-      - 443:443
-      - 80:80
-    privileged: true
-    depends_on:
-      - app
